@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zrgj.dao.SetmealDao">
+
+    <insert id="add" parameterType="com.zrgj.pojo.Setmeal">
+
+         <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id">
+             select  LAST_INSERT_ID()
+         </selectKey>
+
+        insert into t_setmeal
+        (code,name,sex,age,helpCode,price,remark,attention,img)
+        values
+        (#{code},#{name},#{sex},#{age},#{helpCode},#{price},#{remark},#{attention},#{img})
+
+    </insert>
+
+   <!-- 设置检查组和检查项进行关联-->
+
+    <insert id="setSetmealAndCheckGroup" parameterType="hashmap">
+        insert into t_setmeal_checkgroup
+      		(setmeal_id,checkgroup_id)
+      			values
+      		(#{setmeal_id},#{checkgroup_id})
+    </insert>
+
+    <!--分页查询-->
+    <select id="startByPage" parameterType="string" resultType="com.zrgj.pojo.Setmeal" >
+        select * from t_setmeal
+        <if test="value != null and value.length > 0">
+            where code = #{value} or name = #{value} or helpCode = #{value}
+        </if>
+
+    </select>
+
+       <!--查询所有-->
+    <select id="findAll" resultType="com.zrgj.pojo.Setmeal">
+
+   select  *  from    t_setmeal
+    </select>
+
+
+
+    <resultMap id="baseMap" type="com.zrgj.pojo.Setmeal">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="code" property="code"/>
+        <result column="helpCode" property="helpCode"/>
+        <result column="sex" property="sex"/>
+        <result column="age" property="age"/>
+        <result column="price" property="price"/>
+        <result column="remark" property="remark"/>
+        <result column="attention" property="attention"/>
+        <result column="img" property="img"/>
+    </resultMap>
+
+
+    <resultMap id="findGroupMap" extends="baseMap" type="com.zrgj.pojo.Setmeal">
+        <collection  property="checkGroups"
+                     javaType="ArrayList"
+                     ofType="com.zrgj.pojo.CheckGroup"
+                     column="id"
+                     select="com.zrgj.dao.CheckGroupDao.findByCheckGroupsId">
+        </collection>
+    </resultMap>
+
+    <!--关联查询套餐的检查组，检查项-->
+    <select id="findByID" parameterType="int"  resultMap="findGroupMap">
+       select  *  from t_setmeal where id=#{id}
+    </select>
+
+
+    <!--统计套餐的运营数据-->
+<!--    List<Map<String, Object>> findStemealCount();-->
+   <!-- 显示内连接查询-->
+    <select id="findStemealCount" resultType="map">
+       select s.name,count(o.id) as value
+  	from t_order o ,t_setmeal s
+  	where o.setmeal_id = s.id
+  	group by s.name
+
+    </select>
+</mapper>
